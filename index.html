@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Дхарма-тулкит — опрос практикующих</title>
+<meta name="description" content="Анонимный опрос для буддийских практикующих: как вы ведёте счёт практик, узнаёте даты особых дней и находите тексты.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #0f0806;
+    color: #f0e6d3;
+    background-image:
+      radial-gradient(ellipse at 20% 50%, rgba(139, 0, 0, 0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 20%, rgba(212, 160, 23, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 80%, rgba(74, 14, 14, 0.2) 0%, transparent 50%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .wrapper {
+    max-width: 640px;
+    width: 100%;
+    padding: 24px 20px 48px;
+  }
+
+  /* Header */
+  .header {
+    text-align: center;
+    padding: 32px 12px 28px;
+    position: relative;
+    border-bottom: 2px solid rgba(212, 160, 23, 0.3);
+    margin-bottom: 8px;
+  }
+  .header::after {
+    content: '☸';
+    position: absolute;
+    bottom: -21px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 32px;
+    background: #0f0806;
+    padding: 0 20px;
+    color: #d4a017;
+  }
+  .header-badge {
+    display: inline-block;
+    background: #4a0e0e;
+    color: #d4a017;
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    border: 1px solid rgba(212, 160, 23, 0.3);
+  }
+  .header h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(24px, 5vw, 34px);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 10px;
+  }
+  .header p {
+    color: rgba(240, 230, 211, 0.75);
+    font-size: 15px;
+    line-height: 1.55;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+
+  /* Privacy note */
+  .privacy {
+    background: rgba(74, 14, 14, 0.35);
+    border: 1px solid rgba(212, 160, 23, 0.25);
+    border-radius: 12px;
+    padding: 14px 18px;
+    margin: 32px 0 8px;
+    font-size: 13px;
+    line-height: 1.55;
+    color: rgba(240, 230, 211, 0.85);
+  }
+  .privacy strong { color: #d4a017; }
+
+  /* Progress */
+  .progress-wrap {
+    margin: 32px 0 20px;
+    display: none;
+  }
+  .progress-bar {
+    height: 3px;
+    background: rgba(212, 160, 23, 0.15);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: #d4a017;
+    border-radius: 2px;
+    transition: width 0.4s ease;
+  }
+  .progress-label {
+    font-size: 12px;
+    color: rgba(240, 230, 211, 0.5);
+    margin-top: 8px;
+    text-align: right;
+  }
+
+  /* Question card */
+  .card {
+    background: rgba(15, 8, 6, 0.7);
+    border: 1px solid rgba(212, 160, 23, 0.25);
+    border-radius: 16px;
+    padding: 28px 24px;
+    backdrop-filter: blur(6px);
+    animation: fadeIn 0.45s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .q-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 21px;
+    line-height: 1.35;
+    margin-bottom: 20px;
+    color: #f0e6d3;
+  }
+  .q-hint {
+    font-size: 13px;
+    color: rgba(240, 230, 211, 0.55);
+    margin: -12px 0 20px;
+    line-height: 1.5;
+  }
+
+  /* Options */
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 15px 18px;
+    background: rgba(212, 160, 23, 0.06);
+    border: 1.5px solid rgba(212, 160, 23, 0.25);
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 15px;
+    line-height: 1.45;
+    color: #f0e6d3;
+    text-align: left;
+    width: 100%;
+    font-family: 'Inter', sans-serif;
+  }
+  .option:hover {
+    background: rgba(212, 160, 23, 0.14);
+    border-color: rgba(212, 160, 23, 0.55);
+    transform: translateX(3px);
+  }
+  .option.selected {
+    background: rgba(74, 14, 14, 0.55);
+    border-color: #d4a017;
+  }
+  .option .dot {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(212, 160, 23, 0.5);
+    margin-top: 2px;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .option.selected .dot {
+    border-color: #d4a017;
+    background: #d4a017;
+    box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.2);
+  }
+
+  /* Text inputs */
+  .text-input, .textarea {
+    width: 100%;
+    background: rgba(212, 160, 23, 0.06);
+    border: 1.5px solid rgba(212, 160, 23, 0.25);
+    border-radius: 12px;
+    padding: 15px 18px;
+    color: #f0e6d3;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+    outline: none;
+    transition: border-color 0.2s ease;
+  }
+  .text-input:focus, .textarea:focus { border-color: #d4a017; }
+  .textarea { min-height: 110px; resize: vertical; }
+  .textarea::placeholder, .text-input::placeholder { color: rgba(240, 230, 211, 0.35); }
+
+  .input-group { margin-bottom: 12px; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 15px 36px;
+    background: #d4a017;
+    color: #0f0806;
+    border: none;
+    border-radius: 12px;
+    font-family: 'Inter', sans-serif;
+    font-size: 16px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .btn:hover { background: #e8b42e; transform: translateY(-2px); }
+  .btn:disabled { opacity: 0.35; cursor: not-allowed; transform: none; }
+  .btn-outline {
+    background: transparent;
+    color: #d4a017;
+    border: 1.5px solid rgba(212, 160, 23, 0.45);
+  }
+  .btn-outline:hover { background: rgba(212, 160, 23, 0.1); }
+  .btn-row {
+    display: flex;
+    gap: 12px;
+    margin-top: 24px;
+    flex-wrap: wrap;
+  }
+  .btn-back {
+    background: transparent;
+    color: rgba(240, 230, 211, 0.6);
+    border: none;
+    padding: 15px 10px;
+    font-size: 14px;
+    cursor: pointer;
+    font-family: 'Inter', sans-serif;
+  }
+  .btn-back:hover { color: #f0e6d3; }
+
+  /* Final screen */
+  .final-icon { font-size: 48px; text-align: center; margin-bottom: 16px; }
+  .final-text {
+    text-align: center;
+    line-height: 1.6;
+    color: rgba(240, 230, 211, 0.85);
+    font-size: 15px;
+  }
+  .final-text strong { color: #d4a017; }
+  .contact-note {
+    margin-top: 20px;
+    padding: 16px;
+    background: rgba(74, 14, 14, 0.35);
+    border: 1px solid rgba(212, 160, 23, 0.25);
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.6;
+    text-align: center;
+  }
+
+  .footer {
+    margin-top: auto;
+    padding: 24px;
+    text-align: center;
+    font-size: 12px;
+    color: rgba(240, 230, 211, 0.35);
+    line-height: 1.6;
+  }
+  .footer a { color: rgba(212, 160, 23, 0.7); text-decoration: none; }
+
+  .hidden { display: none !important; }
+
+  @media (max-width: 480px) {
+    .card { padding: 22px 18px; }
+    .btn { width: 100%; }
+    .btn-row { flex-direction: column-reverse; }
+    .btn-back { width: 100%; }
+  }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <div class="header">
+    <div class="header-badge">Дхарма-тулкит</div>
+    <h1>Как вы практикуете?</h1>
+    <p>Мы делаем бесплатное приложение для практикующих — календарь особых дней, счётчики практик и тексты, на русском языке и без интернета.</p>
+  </div>
+
+  <div class="privacy" id="privacyNote">
+    <strong>Анонимно, 5–7 минут.</strong> Здесь нет «правильных» ответов — нам важно только фактическое поведение.
+    Мы ничего не оцениваем и не передаём данные третьим лицам; результаты будут опубликованы только в обобщённом виде.
+    В конце можно оставить контакт, если готовы поговорить о своей практике подробнее — это особенно ценно.
+  </div>
+
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-label" id="progressLabel"></div>
+  </div>
+
+  <div id="app"></div>
+</div>
+
+<div class="footer">
+  Опрос проводится в рамках UX-исследования проекта «Дхарма-тулкит» (буддийский тулкит: Тхеравада · Махаяна · Ваджраяна · Бон)<br>
+  Всё хранится на устройстве — без аккаунтов, аналитики и трекеров.
+</div>
+
+<script>
+// ============ КОНФИГУРАЦИЯ ============
+// SUBMIT_URL: адрес для отправки ответов (Google Apps Script Web App, Formspree и т.п.)
+// Оставьте пустым — тогда на финальном экране покажется инструкция отправить ответы вручную.
+const SUBMIT_URL = "";
+
+// Куда писать добровольцев для интервью (показывается на финальном экране)
+const CONTACT_TELEGRAM = "@dharma_toolkit"; // замените на реальный контакт
+
+// ============ СОСТОЯНИЕ ============
+let answers = {};
+let history = [];
+let currentStep = null;
+
+try {
+  const saved = localStorage.getItem("dharma_survey");
+  if (saved) answers = JSON.parse(saved);
+} catch (e) {}
+
+function saveState() {
+  try { localStorage.setItem("dharma_survey", JSON.stringify(answers)); } catch (e) {}
+}
+
+// ============ ВОПРОСЫ (машина состояний) ============
+const QUESTIONS = {
+
+  q1: {
+    title: "Есть ли у вас сейчас буддийская практика?",
+    hint: "Медитация, мантры, ритуалы, соблюдение обетов — в любом объёме.",
+    type: "single",
+    key: "practice",
+    options: [
+      { value: "Да, практикую", next: "q2" },
+      { value: "Нет, но интересуюсь буддизмом или медитацией", next: "q10" },
+      { value: "Нет, не практикую и не интересуюсь", next: "end_nopractice" }
+    ]
+  },
+
+  q2: {
+    title: "Какая традиция вам ближе?",
+    type: "single",
+    key: "tradition",
+    options: [
+      { value: "Тхеравада", next: "q4" },
+      { value: "Дзен (Махаяна)", next: "q4" },
+      { value: "Ваджраяна", next: "q3" },
+      { value: "Бон", next: "q4" },
+      { value: "Практикую из разных традиций", next: "q4" },
+      { value: "Затрудняюсь ответить", next: "q4" }
+    ]
+  },
+
+  q3: {
+    title: "Какая школа Ваджраяны?",
+    hint: "Если не примыкаете к конкретной школе — так и выберите, это нормально.",
+    type: "single",
+    key: "school",
+    options: [
+      { value: "Ньингма", next: "q4" },
+      { value: "Кагью", next: "q4" },
+      { value: "Гелуг", next: "q4" },
+      { value: "Сакья", next: "q4" },
+      { value: "Другая", next: "q3_other", isOther: true },
+      { value: "Не знаю / не примыкаю к школе", next: "q4" }
+    ]
+  },
+
+  q3_other: {
+    title: "Какая школа?",
+    type: "text",
+    key: "school_other",
+    placeholder: "Например: Джонанг, Риме…",
+    next: "q4"
+  },
+
+  q4: {
+    title: "Сколько лет вы практикуете?",
+    type: "single",
+    key: "years",
+    options: [
+      { value: "Меньше года", next: "q5" },
+      { value: "1–3 года", next: "q5" },
+      { value: "3–10 лет", next: "q5" },
+      { value: "Больше 10 лет", next: "q5" }
+    ]
+  },
+
+  q5: {
+    title: "Есть ли в вашей практике повторения, которые нужно считать?",
+    hint: "Мантры, простирания, обходы, чтения — любые счётные практики.",
+    type: "single",
+    key: "has_counting",
+    options: [
+      { value: "Да", next: "q6" },
+      { value: "Нет", next: "q8" }
+    ]
+  },
+
+  q6: {
+    title: "Чем вы ведёте счёт?",
+    type: "single",
+    key: "count_method",
+    options: [
+      { value: "Мала / чётки (физические)", next: "q8" },
+      { value: "Бумага или заметки в телефоне", next: "q8" },
+      { value: "Приложение-счётчик", next: "q7" },
+      { value: "Не веду счёт", next: "q8" },
+      { value: "Другое", next: "q6_other", isOther: true }
+    ]
+  },
+
+  q6_other: {
+    title: "Как именно вы ведёте счёт?",
+    type: "text",
+    key: "count_method_other",
+    placeholder: "Ваш способ…",
+    next: "q8"
+  },
+
+  q7: {
+    title: "Каким приложением-счётчиком вы пользуетесь?",
+    hint: "И что в нём устраивает / не устраивает? Можно коротко.",
+    type: "textarea",
+    key: "app_used",
+    placeholder: "Название приложения и впечатления…",
+    next: "q8"
+  },
+
+  q8: {
+    title: "Как вы узнаёте даты особых дней?",
+    hint: "Упосатхи, 10-е и 25-е дни, праздники, Лосар.",
+    type: "single",
+    key: "dates_source",
+    options: [
+      { value: "Календарь общины (PDF, бумага, фото)", next: "q9" },
+      { value: "Приложение", next: "q9" },
+      { value: "Соцсети и мессенджеры общины", next: "q9" },
+      { value: "Не отслеживаю", next: "q10" },
+      { value: "Другое", next: "q8_other", isOther: true }
+    ]
+  },
+
+  q8_other: {
+    title: "Как вы узнаёте даты особых дней?",
+    type: "text",
+    key: "dates_source_other",
+    placeholder: "Ваш способ…",
+    next: "q9"
+  },
+
+  q9: {
+    title: "Случалось ли сверять даты из приложения или интернета с календарём вашей общины?",
+    type: "single",
+    key: "dates_checked",
+    options: [
+      { value: "Да, совпадали", next: "q10" },
+      { value: "Да, расходились", next: "q9_details" },
+      { value: "Не сверял(а)", next: "q10" }
+    ]
+  },
+
+  q9_details: {
+    title: "Что именно расходилось?",
+    hint: "Если помните — это очень поможет сделать точный календарь.",
+    type: "textarea",
+    key: "dates_conflict_details",
+    placeholder: "Например: Лосар сдвинут на день, другая традиция календаря…",
+    optional: true,
+    next: "q10"
+  },
+
+  q10: {
+    title: "Читаете ли вы регулярно что-то по практике?",
+    hint: "Сутты, тексты, наставления. Что именно и где ищете?",
+    type: "textarea",
+    key: "reading",
+    placeholder: "Например: Мадджхима-никая на theravada.ru, наставления учителя в канале…",
+    optional: true,
+    next: "q11"
+  },
+
+  q11: {
+    title: "Пробовали ли приложения для практики или медитации?",
+    hint: "Что понравилось, что раздражало? Если не пробовали — пропустите.",
+    type: "textarea",
+    key: "apps_tried",
+    placeholder: "Названия и впечатления…",
+    optional: true,
+    next: "q12"
+  },
+
+  q12: {
+    title: "Хотите помочь проекту дальше?",
+    hint: "Мы иногда приглашаем на 45-минутный разговор о практике (удалённо, в удобное время). Контакт используется только для связи об интервью.",
+    type: "contact",
+    key: "interview",
+    options: [
+      { value: "Да, готов(а) поговорить" },
+      { value: "Нет, спасибо" }
+    ],
+    next: "end"
+  },
+
+  end: { type: "end" },
+  end_nopractice: { type: "end_nopractice" }
+};
+
+// ============ РЕНДЕР ============
+const app = document.getElementById("app");
+const progressWrap = document.getElementById("progressWrap");
+const progressFill = document.getElementById("progressFill");
+const progressLabel = document.getElementById("progressLabel");
+
+const TOTAL_ESTIMATED = 9; // средняя длина пути в вопросах
+
+function render(stepId) {
+  currentStep = stepId;
+  const q = QUESTIONS[stepId];
+
+  if (q.type === "end" || q.type === "end_nopractice") {
+    renderFinal(q.type);
+    return;
+  }
+
+  document.getElementById("privacyNote").classList.add("hidden");
+  progressWrap.style.display = "block";
+  const pct = Math.min(100, Math.round((history.length / TOTAL_ESTIMATED) * 100));
+  progressFill.style.width = pct + "%";
+  progressLabel.textContent = "Шаг " + (history.length + 1) + " из ~" + TOTAL_ESTIMATED;
+
+  let html = '<div class="card">';
+  html += '<div class="q-title">' + q.title + "</div>";
+  if (q.hint) html += '<div class="q-hint">' + q.hint + "</div>";
+
+  if (q.type === "single") {
+    html += '<div class="options">';
+    q.options.forEach((opt, i) => {
+      const selected = answers[q.key] === opt.value ? " selected" : "";
+      html +=
+        '<button class="option' + selected + '" data-value="' + escAttr(opt.value) + '" data-index="' + i + '">' +
+        '<span class="dot"></span><span>' + escHtml(opt.value) + "</span></button>";
+    });
+    html += "</div>";
+    html += '<div class="btn-row"><button class="btn" id="nextBtn" disabled>Далее →</button></div>';
+  } else if (q.type === "text") {
+    html += '<div class="input-group"><input class="text-input" id="textInput" type="text" placeholder="' + escAttr(q.placeholder || "") + '" value="' + escAttr(answers[q.key] || "") + '"></div>';
+    html += '<div class="btn-row"><button class="btn" id="nextBtn" disabled>Далее →</button></div>';
+  } else if (q.type === "textarea") {
+    html += '<div class="input-group"><textarea class="textarea" id="textInput" placeholder="' + escAttr(q.placeholder || "") + '">' + escHtml(answers[q.key] || "") + "</textarea></div>";
+    if (q.optional) html += '<button class="btn-back" id="skipBtn">Пропустить вопрос →</button>';
+    html += '<div class="btn-row"><button class="btn" id="nextBtn">Далее →</button></div>';
+  } else if (q.type === "contact") {
+    html += '<div class="options">';
+    q.options.forEach((opt) => {
+      const selected = answers[q.key] === opt.value ? " selected" : "";
+      html +=
+        '<button class="option' + selected + '" data-value="' + escAttr(opt.value) + '">' +
+        '<span class="dot"></span><span>' + escHtml(opt.value) + "</span></button>";
+    });
+    html += "</div>";
+    html += '<div class="input-group hidden" id="contactInputWrap" style="margin-top:12px">';
+    html += '<input class="text-input" id="contactInput" type="text" placeholder="Telegram или e-mail" value="' + escAttr(answers[q.key + "_contact"] || "") + '">';
+    html += "</div>";
+    html += '<div class="btn-row"><button class="btn" id="nextBtn" disabled>Завершить ✓</button></div>';
+  }
+
+  if (history.length > 0) {
+    html += '<button class="btn-back" id="backBtn">← Назад</button>';
+  }
+  html += "</div>";
+
+  app.innerHTML = html;
+  bindEvents(q);
+}
+
+function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
+function escAttr(s) { return escHtml(s).replace(/"/g,"&quot;"); }
+
+function bindEvents(q) {
+  // Назад
+  const backBtn = document.getElementById("backBtn");
+  if (backBtn) backBtn.onclick = () => {
+    const prev = history.pop();
+    if (prev) render(prev);
+  };
+
+  if (q.type === "single") {
+    const nextBtn = document.getElementById("nextBtn");
+    document.querySelectorAll(".option").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".option").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        answers[q.key] = btn.dataset.value;
+        saveState();
+        nextBtn.disabled = false;
+      };
+    });
+    nextBtn.onclick = () => {
+      const opt = q.options.find((o) => o.value === answers[q.key]);
+      if (!opt) return;
+      history.push(currentStep);
+      render(opt.next);
+    };
+  } else if (q.type === "text" || q.type === "textarea") {
+    const input = document.getElementById("textInput");
+    const nextBtn = document.getElementById("nextBtn");
+    const skipBtn = document.getElementById("skipBtn");
+    const validate = () => {
+      const v = input.value.trim();
+      if (q.optional) { nextBtn.disabled = false; return; }
+      nextBtn.disabled = v.length === 0;
+    };
+    input.oninput = () => { answers[q.key] = input.value; saveState(); validate(); };
+    validate();
+    if (skipBtn) skipBtn.onclick = () => { history.push(currentStep); render(q.next); };
+    nextBtn.onclick = () => {
+      if (!q.optional && input.value.trim().length === 0) return;
+      answers[q.key] = input.value.trim();
+      saveState();
+      history.push(currentStep);
+      render(q.next);
+    };
+    if (q.type === "text") input.focus();
+  } else if (q.type === "contact") {
+    const nextBtn = document.getElementById("nextBtn");
+    const contactWrap = document.getElementById("contactInputWrap");
+    const contactInput = document.getElementById("contactInput");
+    document.querySelectorAll(".option").forEach((btn) => {
+      btn.onclick = () => {
+        document.querySelectorAll(".option").forEach((b) => b.classList.remove("selected"));
+        btn.classList.add("selected");
+        answers[q.key] = btn.dataset.value;
+        saveState();
+        if (btn.dataset.value === q.options[0].value) {
+          contactWrap.classList.remove("hidden");
+          contactInput.focus();
+        } else {
+          contactWrap.classList.add("hidden");
+          nextBtn.disabled = false;
+        }
+      };
+    });
+    contactInput.oninput = () => { answers[q.key + "_contact"] = contactInput.value; saveState(); };
+    nextBtn.onclick = () => {
+      answers[q.key + "_contact"] = contactInput.value.trim();
+      saveState();
+      history.push(currentStep);
+      submitResults();
+      render("end");
+    };
+  }
+}
+
+// ============ ФИНАЛ И ОТПРАВКА ============
+function buildResultText() {
+  const labels = {
+    practice: "Практика", tradition: "Традиция", school: "Школа",
+    school_other: "Школа (другое)", years: "Стаж", has_counting: "Счётные практики",
+    count_method: "Способ счёта", count_method_other: "Способ счёта (другое)",
+    app_used: "Приложение-счётчик", dates_source: "Источник дат",
+    dates_source_other: "Источник дат (другое)", dates_checked: "Сверка дат",
+    dates_conflict_details: "Расхождения дат", reading: "Чтение",
+    apps_tried: "Приложения", interview: "Готовность к интервью",
+    interview_contact: "Контакт"
+  };
+  let lines = [];
+  for (const [k, v] of Object.entries(answers)) {
+    if (v === null || v === undefined || String(v).trim() === "") continue;
+    lines.push((labels[k] || k) + ": " + v);
+  }
+  return lines.join("\n");
+}
+
+async function submitResults() {
+  if (!SUBMIT_URL) return;
+  try {
+    await fetch(SUBMIT_URL, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ answers: answers, ts: new Date().toISOString() })
+    });
+  } catch (e) { /* тихо игнорируем — ответы сохранены локально */ }
+}
+
+function renderFinal(type) {
+  progressWrap.style.display = "block";
+  progressFill.style.width = "100%";
+  progressLabel.textContent = "Готово";
+  document.getElementById("privacyNote").classList.add("hidden");
+
+  let html = '<div class="card">';
+  if (type === "end_nopractice") {
+    html += '<div class="final-icon">☸</div>';
+    html += '<div class="final-text">Спасибо, что заглянули! Возможно, приложение ещё появится в вашей жизни — <strong>когда возникнет интерес к практике</strong>.</div>';
+  } else {
+    html += '<div class="final-icon">🙏</div>';
+    html += '<div class="final-text"><strong>Спасибо!</strong> Ваши ответы помогут сделать инструмент, которым удобно пользоваться каждый день — без интернета, рекламы и лишнего шума.</div>';
+
+    if (!SUBMIT_URL) {
+      html += '<div class="contact-note">Чтобы ответы дошли до команды, отправьте их нам: <strong>скопируйте текст ниже</strong> и перешлите в Telegram ' + escHtml(CONTACT_TELEGRAM) + '.</div>';
+      html += '<div class="input-group" style="margin-top:16px"><textarea class="textarea" id="resultText" readonly style="min-height:150px">' + escHtml(buildResultText()) + "</textarea></div>";
+      html += '<div class="btn-row"><button class="btn" id="copyBtn">📋 Скопировать ответы</button></div>';
+    } else {
+      html += '<div class="contact-note">Ответы отправлены. Если хотите следить за проектом — напишите нам в Telegram: <strong>' + escHtml(CONTACT_TELEGRAM) + "</strong></div>";
+    }
+  }
+  html += '<div class="btn-row"><button class="btn btn-outline" id="restartBtn">Пройти заново</button></div>';
+  html += "</div>";
+
+  app.innerHTML = html;
+
+  const copyBtn = document.getElementById("copyBtn");
+  if (copyBtn) copyBtn.onclick = async () => {
+    const ta = document.getElementById("resultText");
+    ta.select();
+    try { await navigator.clipboard.writeText(ta.value); } catch (e) { document.execCommand("copy"); }
+    copyBtn.textContent = "✓ Скопировано";
+  };
+  document.getElementById("restartBtn").onclick = () => {
+    answers = {}; history = [];
+    try { localStorage.removeItem("dharma_survey"); } catch (e) {}
+    location.reload();
+  };
+}
+
+render("q1");
+</script>
+</body>
+</html>
