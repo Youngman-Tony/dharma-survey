@@ -20,41 +20,49 @@
 
 ## Сбор ответов
 
-Статический сайт не умеет сохранять данные сам. Включите один из вариантов:
+Статический сайт не умеет сохранять данные сам: ответы отправляются в `SUBMIT_URL`,
+который указывает на приёмник. Основной вариант — Cloudflare Worker + KV.
 
-### Вариант 1 — Google Apps Script (рекомендуется, бесплатно)
+### Вариант 1 — Cloudflare Worker + KV (рекомендуется, бесплатно)
 
-1. Откройте [script.google.com](https://script.google.com) → Новый проект
-2. Вставьте код:
+Файл `worker.js` — готовый приёмник: принимает ответы, складывает в KV-хранилище,
+даёт страницу `/admin` для просмотра, выгрузки CSV и очистки. Код уже в репозитории.
 
-```javascript
-function doPost(e) {
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheets()[0];
-  const data = JSON.parse(e.postData.contents);
-  const row = [new Date(data.ts)].concat(
-    Object.entries(data.answers).map(([k, v]) => k + ": " + v)
-  );
-  sheet.appendRow(row);
-  return ContentService.createTextOutput("ok");
-}
-```
+**Развёртывание (~15 минут):**
 
-3. Создайте связанную Google Таблицу (в редакторе: Триггеры/Ресурсы)
-4. Разверните как Web App: Deploy → New deployment → Web app → доступ «Anyone»
-5. Скопируйте URL развертывания в `SUBMIT_URL` в начале `index.html`
-6. Закоммитьте и запушьте — ответы начнут падать в таблицу
+1. Зарегистрируйтесь на [dash.cloudflare.com](https://dash.cloudflare.com) (бесплатный план, карта не нужна).
+2. **KV**: левое меню → *Workers & Pages* → *KV* → *Create a namespace* → имя `SURVEY_KV`.
+3. **Worker**: *Workers & Pages* → *Create* → *Worker* → *Deploy*. Далее *Edit code*:
+   - очистите редактор и **вставьте всё содержимое `worker.js`** → *Deploy*;
+   - *Settings* → *Variables and Secrets*:
+     - **KV namespace bindings** → *Add binding* → переменная `SURVEY_KV` → выбранный namespace;
+     - **Secrets** → *Add* → `ADMIN_KEY` → придумайте длинный секрет (запишите его отдельно!);
+   - *Save and deploy*.
+4. Проверьте приёмник (выдаст `{"ok":true}`):
+   `POST <worker-url>/submit` с телом `{"answers":{"practice":"практикую"}}`
+   (можно обычным fetch в консоли браузера).
+5. В `index.html` в блоке `КОНФИГУРАЦИЯ` впишите ваш адрес:
+   `const SUBMIT_URL = "https://dharma-survey.<username>.workers.dev/submit";`
+6. Закоммитьте, запушите — сайт начнёт автоматически отправлять ответы.
 
-### Вариант 2 — ручная отправка
+**Админка**: откройте `<worker-url>/admin?key=ВАШ_СЕКРЕТ` — таблица ответов,
+кнопки ⬇ CSV и «Очистить хранилище» (для очистки используется DELETE-запрос).
+Убирайте URL-параметр `key` из закладок браузерных — храните секрет отдельно.
 
-Оставьте `SUBMIT_URL` пустым: на финальном экране респондент увидит скопированный
-текст ответов и контакт Telegram для пересылки. Работает без настройки, но
-повышает трение.
+**Ограничения free tier**: 100 000 запросов/день, 1 000 записей KV/день — с запасом
+покрывают ожидаемый объём (100–300 ответов).
+
+### Вариант 2 — ручная отправка (аварийный режим)
+
+Если `SUBMIT_URL` пуст или недоступен, на финальном экране респондент увидит
+скопированный текст ответов и контакт Telegram для ручной пересылки. Работает
+всегда, но повышает трение — большинство ответов не дойдёт.
 
 ## Настройка
 
 В начале `index.html` в блоке `КОНФИГУРАЦИЯ`:
 
-- `SUBMIT_URL` — адрес приёмника ответов (см. выше)
+- `SUBMIT_URL` — адрес Cloudflare Worker (`<worker-url>/submit`), см. выше
 - `CONTACT_TELEGRAM` — контакт команды, показывается респонденту
 
 ## Вопросы анкеты

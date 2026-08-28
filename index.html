@@ -317,9 +317,10 @@
 
 <script>
 // ============ КОНФИГУРАЦИЯ ============
-// SUBMIT_URL: адрес для отправки ответов (Google Apps Script Web App, Formspree и т.п.)
-// Оставьте пустым — тогда на финальном экране покажется инструкция отправить ответы вручную.
-const SUBMIT_URL = "";
+// SUBMIT_URL: адрес Cloudflare Worker для автоматической отправки ответов.
+// Пример: "https://dharma-survey.your-name.workers.dev/submit"
+// Пусто — ручной режим (финальный экран попросит переслать ответы в Telegram).
+const SUBMIT_URL = "__WORKER_URL__";
 
 // Куда писать добровольцев для интервью (показывается на финальном экране)
 const CONTACT_TELEGRAM = "@dharma_toolkit"; // замените на реальный контакт
@@ -662,7 +663,6 @@ function bindEvents(q) {
       answers[q.key + "_contact"] = contactInput.value.trim();
       saveState();
       history.push(currentStep);
-      submitResults();
       render("end");
     };
   }
@@ -689,15 +689,15 @@ function buildResultText() {
 }
 
 async function submitResults() {
-  if (!SUBMIT_URL) return;
+  if (!SUBMIT_URL || SUBMIT_URL.startsWith("__")) return;
   try {
     await fetch(SUBMIT_URL, {
       method: "POST",
-      mode: "no-cors",
-      headers: { "Content-Type": "text/plain" },
+      mode: "cors",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ answers: answers, ts: new Date().toISOString() })
     });
-  } catch (e) { /* тихо игнорируем — ответы сохранены локально */ }
+  } catch (e) { /* тихо игнорируем — ответы сохранены локально, есть ручной фолбэк */ }
 }
 
 function renderFinal(type) {
@@ -706,26 +706,43 @@ function renderFinal(type) {
   progressLabel.textContent = "Готово";
   document.getElementById("privacyNote").classList.add("hidden");
 
+  const hasWorker = SUBMIT_URL && !SUBMIT_URL.startsWith("__");
+
   let html = '<div class="card">';
   if (type === "end_nopractice") {
     html += '<div class="final-icon">☸</div>';
     html += '<div class="final-text">Спасибо, что заглянули! Возможно, приложение ещё появится в вашей жизни — <strong>когда возникнет интерес к практике</strong>.</div>';
   } else {
     html += '<div class="final-icon">🙏</div>';
-    html += '<div class="final-text"><strong>Спасибо!</strong> Ваши ответы помогут сделать инструмент, которым удобно пользоваться каждый день — без интернета, рекламы и лишнего шума.</div>';
+    html += '<div class="final-text"><strong>Спасибо!</strong> Ваши ответы помогают сделать инструмент, которым удобно пользоваться каждый день — без интернета, рекламы и лишнего шума.</div>';
 
-    if (!SUBMIT_URL) {
-      html += '<div class="contact-note">Чтобы ответы дошли до команды, отправьте их нам: <strong>скопируйте текст ниже</strong> и перешлите в Telegram ' + escHtml(CONTACT_TELEGRAM) + '.</div>';
+    if (hasWorker) {
+      html += '<div class="contact-note" id="submitStatus">⏳ Отправляем ответы…</div>';
+    } else {
+      html += '<div class="contact-note">Чтобы ответы дошли до команды, <strong>скопируйте текст ниже</strong> и перешлите в Telegram ' + escHtml(CONTACT_TELEGRAM) + '.</div>';
       html += '<div class="input-group" style="margin-top:16px"><textarea class="textarea" id="resultText" readonly style="min-height:150px">' + escHtml(buildResultText()) + "</textarea></div>";
       html += '<div class="btn-row"><button class="btn" id="copyBtn">📋 Скопировать ответы</button></div>';
-    } else {
-      html += '<div class="contact-note">Ответы отправлены. Если хотите следить за проектом — напишите нам в Telegram: <strong>' + escHtml(CONTACT_TELEGRAM) + "</strong></div>";
     }
   }
   html += '<div class="btn-row"><button class="btn btn-outline" id="restartBtn">Пройти заново</button></div>';
   html += "</div>";
 
   app.innerHTML = html;
+
+  // Асинхронная отправка со статусом
+  if (hasWorker && type !== "end_nopractice") {
+    const status = document.getElementById("submitStatus");
+    submitResults().then(() => {
+      status.innerHTML = "✓ Ответы отправлены. Если хотите следить за проектом — напишите нам в Telegram: <strong>" + escHtml(CONTACT_TELEGRAM) + "</strong>";
+    }).catch(() => {
+      status.innerHTML = "Не удалось отправить автоматически. Скопируйте текст ниже и перешлите в Telegram " + escHtml(CONTACT_TELEGRAM) + ':';
+      const wrap = document.createElement("div");
+      wrap.className = "input-group";
+      wrap.style.marginTop = "16px";
+      wrap.innerHTML = '<textarea class="textarea" readonly style="min-height:150px">' + escHtml(buildResultText()) + "</textarea>";
+      status.after(wrap);
+    });
+  }
 
   const copyBtn = document.getElementById("copyBtn");
   if (copyBtn) copyBtn.onclick = async () => {
