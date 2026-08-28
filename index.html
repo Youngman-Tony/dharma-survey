@@ -184,6 +184,21 @@
     background: #d4a017;
     box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.2);
   }
+  .option .box {
+    flex-shrink: 0;
+    width: 18px;
+    height: 18px;
+    border-radius: 5px;
+    border: 2px solid rgba(212, 160, 23, 0.5);
+    margin-top: 2px;
+    position: relative;
+    transition: all 0.2s ease;
+  }
+  .option.selected .box {
+    border-color: #d4a017;
+    background: #d4a017;
+    box-shadow: 0 0 0 3px rgba(212, 160, 23, 0.2);
+  }
 
   /* Text inputs */
   .text-input, .textarea {
@@ -343,7 +358,7 @@ function saveState() {
 const QUESTIONS = {
 
   q1: {
-    title: "Есть ли у вас сейчас буддийская практика?",
+    title: "Практикуете ли вы в повседневной жизни?",
     hint: "Медитация, мантры, ритуалы, соблюдение обетов — в любом объёме.",
     type: "single",
     key: "practice",
@@ -355,39 +370,27 @@ const QUESTIONS = {
   },
 
   q2: {
-    title: "Какая традиция вам ближе?",
+    title: "К какой традиции/школе относите себя?",
     type: "single",
     key: "tradition",
     options: [
       { value: "Тхеравада", next: "q4" },
-      { value: "Дзен (Махаяна)", next: "q4" },
-      { value: "Ваджраяна", next: "q3" },
-      { value: "Бон", next: "q4" },
-      { value: "Практикую из разных традиций", next: "q4" },
-      { value: "Затрудняюсь ответить", next: "q4" }
-    ]
-  },
-
-  q3: {
-    title: "Какая школа Ваджраяны?",
-    hint: "Если не примыкаете к конкретной школе — так и выберите, это нормально.",
-    type: "single",
-    key: "school",
-    options: [
+      { value: "Гелуг", next: "q4" },
       { value: "Ньингма", next: "q4" },
       { value: "Кагью", next: "q4" },
-      { value: "Гелуг", next: "q4" },
       { value: "Сакья", next: "q4" },
-      { value: "Другая", next: "q3_other", isOther: true },
-      { value: "Не знаю / не примыкаю к школе", next: "q4" }
+      { value: "Дзен", next: "q4" },
+      { value: "Бон", next: "q4" },
+      { value: "Другое", next: "q2_other", isOther: true },
+      { value: "Беру практики из разных школ", next: "q4" }
     ]
   },
 
-  q3_other: {
-    title: "Какая школа?",
+  q2_other: {
+    title: "Какая традиция или школа?",
     type: "text",
-    key: "school_other",
-    placeholder: "Например: Джонанг, Риме…",
+    key: "tradition_other",
+    placeholder: "Например: Джонанг, Амида, традиции моголов…",
     next: "q4"
   },
 
@@ -416,7 +419,7 @@ const QUESTIONS = {
 
   q6: {
     title: "Чем вы ведёте счёт?",
-    type: "single",
+    type: "multi",
     key: "count_method",
     options: [
       { value: "Мала / чётки (физические)", next: "q8" },
@@ -509,7 +512,7 @@ const QUESTIONS = {
 
   q12: {
     title: "Хотите помочь проекту дальше?",
-    hint: "Мы иногда приглашаем на 45-минутный разговор о практике (удалённо, в удобное время). Контакт используется только для связи об интервью.",
+    hint: "Мы можем пригласить вас на 45-минутный разговор о практике (удалённо, в удобное время), чтобы понять, как сделать приложение удобным. Контакт используется только для связи об интервью.",
     type: "contact",
     key: "interview",
     options: [
@@ -529,7 +532,7 @@ const progressWrap = document.getElementById("progressWrap");
 const progressFill = document.getElementById("progressFill");
 const progressLabel = document.getElementById("progressLabel");
 
-const TOTAL_ESTIMATED = 9; // средняя длина пути в вопросах
+const TOTAL_ESTIMATED = 12; // самая длинная ветка опроса в вопросах
 
 function render(stepId) {
   currentStep = stepId;
@@ -557,6 +560,17 @@ function render(stepId) {
       html +=
         '<button class="option' + selected + '" data-value="' + escAttr(opt.value) + '" data-index="' + i + '">' +
         '<span class="dot"></span><span>' + escHtml(opt.value) + "</span></button>";
+    });
+    html += "</div>";
+    html += '<div class="btn-row"><button class="btn" id="nextBtn" disabled>Далее →</button></div>';
+  } else if (q.type === "multi") {
+    html += '<div class="options">';
+    q.options.forEach((opt, i) => {
+      const cur = answers[q.key] || [];
+      const selected = cur.indexOf(opt.value) !== -1 ? " selected" : "";
+      html +=
+        '<button class="option' + selected + '" data-value="' + escAttr(opt.value) + '" data-index="' + i + '">' +
+        '<span class="box"></span><span>' + escHtml(opt.value) + "</span></button>";
     });
     html += "</div>";
     html += '<div class="btn-row"><button class="btn" id="nextBtn" disabled>Далее →</button></div>';
@@ -639,6 +653,31 @@ function bindEvents(q) {
       render(q.next);
     };
     if (q.type === "text") input.focus();
+  } else if (q.type === "multi") {
+    const nextBtn = document.getElementById("nextBtn");
+    document.querySelectorAll(".option").forEach((btn) => {
+      btn.onclick = () => {
+        const arr = (answers[q.key] || []).slice();
+        const i = arr.indexOf(btn.dataset.value);
+        if (i !== -1) arr.splice(i, 1); else arr.push(btn.dataset.value);
+        answers[q.key] = arr;
+        saveState();
+        btn.classList.toggle("selected");
+        nextBtn.disabled = arr.length === 0;
+      };
+    });
+    nextBtn.onclick = () => {
+      const sel = answers[q.key] || [];
+      if (sel.length === 0) return;
+      let next;
+      if (sel.indexOf("Приложение-счётчик") !== -1) next = "q7";
+      else if (sel.indexOf("Другое") !== -1) next = "q6_other";
+      else next = "q8";
+      answers[q.key] = sel.join("; ");
+      saveState();
+      history.push(currentStep);
+      render(next);
+    };
   } else if (q.type === "contact") {
     const nextBtn = document.getElementById("nextBtn");
     const contactWrap = document.getElementById("contactInputWrap");
@@ -652,13 +691,18 @@ function bindEvents(q) {
         if (btn.dataset.value === q.options[0].value) {
           contactWrap.classList.remove("hidden");
           contactInput.focus();
+          nextBtn.disabled = contactInput.value.trim().length === 0;
         } else {
           contactWrap.classList.add("hidden");
           nextBtn.disabled = false;
         }
       };
     });
-    contactInput.oninput = () => { answers[q.key + "_contact"] = contactInput.value; saveState(); };
+    contactInput.oninput = () => {
+      answers[q.key + "_contact"] = contactInput.value;
+      saveState();
+      nextBtn.disabled = contactInput.value.trim().length === 0;
+    };
     nextBtn.onclick = () => {
       answers[q.key + "_contact"] = contactInput.value.trim();
       saveState();
@@ -671,8 +715,8 @@ function bindEvents(q) {
 // ============ ФИНАЛ И ОТПРАВКА ============
 function buildResultText() {
   const labels = {
-    practice: "Практика", tradition: "Традиция", school: "Школа",
-    school_other: "Школа (другое)", years: "Стаж", has_counting: "Счётные практики",
+    practice: "Практика", tradition: "Традиция", tradition_other: "Традиция (другое)",
+    years: "Стаж", has_counting: "Счётные практики",
     count_method: "Способ счёта", count_method_other: "Способ счёта (другое)",
     app_used: "Приложение-счётчик", dates_source: "Источник дат",
     dates_source_other: "Источник дат (другое)", dates_checked: "Сверка дат",
