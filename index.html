@@ -292,6 +292,15 @@
   }
   .footer a { color: rgba(212, 160, 23, 0.7); text-decoration: none; }
 
+  .reset-line { text-align: right; padding: 2px 0 10px; }
+  .reset-line a {
+    color: rgba(240, 230, 211, 0.4);
+    font-size: 12px;
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(212, 160, 23, 0.4);
+  }
+  .reset-line a:hover { color: #d4a017; }
+
   .hidden { display: none !important; }
 
   @media (max-width: 480px) {
@@ -310,6 +319,8 @@
     <h1>Как вы практикуете?</h1>
     <p>Мы делаем бесплатное приложение для практикующих — календарь особых дней, счётчики практик и тексты, на русском языке и без интернета.</p>
   </div>
+
+  <div class="reset-line" id="resetLine"><a href="#" id="resetLink">Начать заново</a></div>
 
   <div class="privacy" id="privacyNote">
     <strong>Анонимно, 5–7 минут.</strong> Здесь нет «правильных» ответов — нам важно только фактическое поведение.
@@ -344,14 +355,22 @@ const CONTACT_TELEGRAM = "@Shavkuta_Anton"; // замените на реаль�
 let answers = {};
 let history = [];
 let currentStep = null;
+let restoreStep = null;
 
+const STORAGE_KEY = "dharma_survey";
 try {
-  const saved = localStorage.getItem("dharma_survey");
-  if (saved) answers = JSON.parse(saved);
+  const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || "null");
+  if (saved && typeof saved === "object") {
+    answers = (saved.answers && typeof saved.answers === "object") ? saved.answers : {};
+    history = Array.isArray(saved.history) ? saved.history : [];
+    restoreStep = typeof saved.step === "string" ? saved.step : null;
+  }
 } catch (e) {}
 
 function saveState() {
-  try { localStorage.setItem("dharma_survey", JSON.stringify(answers)); } catch (e) {}
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ answers: answers, history: history, step: currentStep }));
+  } catch (e) {}
 }
 
 // ============ ВОПРОСЫ (машина состояний) ============
@@ -553,6 +572,9 @@ function render(stepId) {
     return;
   }
 
+  const resetLine = document.getElementById("resetLine");
+  if (resetLine) resetLine.classList.remove("hidden");
+
   document.getElementById("privacyNote").classList.add("hidden");
   progressWrap.style.display = "block";
   const pct = Math.min(100, Math.round((history.length / TOTAL_ESTIMATED) * 100));
@@ -643,6 +665,8 @@ function bindEvents(q) {
       history.push(currentStep);
       render(opt.next);
     };
+    const curSingle = answers[q.key];
+    if (curSingle && q.options.some((o) => o.value === curSingle)) nextBtn.disabled = false;
   } else if (q.type === "text" || q.type === "textarea") {
     const input = document.getElementById("textInput");
     const nextBtn = document.getElementById("nextBtn");
@@ -665,6 +689,14 @@ function bindEvents(q) {
     if (q.type === "text") input.focus();
   } else if (q.type === "multi") {
     const nextBtn = document.getElementById("nextBtn");
+    const rawMulti = answers[q.key];
+    const initMulti = Array.isArray(rawMulti) ? rawMulti.slice()
+      : rawMulti ? String(rawMulti).split(";").map((s) => s.trim()).filter(Boolean)
+      : [];
+    if (initMulti.length > 0) {
+      answers[q.key] = initMulti;
+      nextBtn.disabled = false;
+    }
     document.querySelectorAll(".option").forEach((btn) => {
       btn.onclick = () => {
         const arr = (answers[q.key] || []).slice();
@@ -717,8 +749,15 @@ function bindEvents(q) {
       answers[q.key + "_contact"] = contactInput.value.trim();
       saveState();
       history.push(currentStep);
-      render("end");
+      render(q.next);
     };
+    const curContact = answers[q.key];
+    if (curContact === q.options[0].value) {
+      contactWrap.classList.remove("hidden");
+      nextBtn.disabled = !String(answers[q.key + "_contact"] || "").trim();
+    } else if (curContact === q.options[1].value) {
+      nextBtn.disabled = false;
+    }
   }
 }
 
@@ -759,6 +798,8 @@ function renderFinal(type) {
   progressFill.style.width = "100%";
   progressLabel.textContent = "Готово";
   document.getElementById("privacyNote").classList.add("hidden");
+  const resetLineEl = document.getElementById("resetLine");
+  if (resetLineEl) resetLineEl.classList.add("hidden");
 
   const hasWorker = SUBMIT_URL && !SUBMIT_URL.startsWith("__");
 
@@ -807,12 +848,27 @@ function renderFinal(type) {
   };
   document.getElementById("restartBtn").onclick = () => {
     answers = {}; history = [];
-    try { localStorage.removeItem("dharma_survey"); } catch (e) {}
+    try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
     location.reload();
   };
 }
 
-render("q1");
+const resetLink = document.getElementById("resetLink");
+if (resetLink) resetLink.onclick = (e) => {
+  e.preventDefault();
+  answers = {}; history = [];
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+  location.reload();
+};
+
+let startStep = "q1";
+if (restoreStep && QUESTIONS[restoreStep] && restoreStep !== "end" && restoreStep !== "end_nopractice") {
+  startStep = restoreStep;
+} else if (restoreStep) {
+  answers = {}; history = [];
+  try { localStorage.removeItem(STORAGE_KEY); } catch (e) {}
+}
+render(startStep);
 </script>
 </body>
 </html>
