@@ -20,22 +20,22 @@ const CORS_HEADERS = {
 };
 
 const FIELD_ORDER = [
-  "practice", "tradition", "school", "school_other", "years",
+  "practice", "tradition", "tradition_other", "years",
   "has_counting", "count_method", "count_method_other", "app_used",
   "dates_source", "dates_source_other", "dates_checked",
   "dates_conflict_details", "reading", "apps_tried",
-  "interview", "interview_contact"
+  "interview", "interview_contact", "comment"
 ];
 
 const FIELD_LABELS = {
-  practice: "Практика", tradition: "Традиция", school: "Школа",
-  school_other: "Школа (другое)", years: "Стаж", has_counting: "Счётные практики",
+  practice: "Практика", tradition: "Традиция", tradition_other: "Традиция (другое)",
+  years: "Стаж", has_counting: "Счётные практики",
   count_method: "Способ счёта", count_method_other: "Способ счёта (другое)",
   app_used: "Приложение-счётчик", dates_source: "Источник дат",
   dates_source_other: "Источник дат (другое)", dates_checked: "Сверка дат",
   dates_conflict_details: "Расхождения дат", reading: "Чтение",
   apps_tried: "Приложения", interview: "Готовность к интервью",
-  interview_contact: "Контакт"
+  interview_contact: "Контакт", comment: "Комментарий"
 };
 
 function csvEscape(v) {

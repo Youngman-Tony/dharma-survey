@@ -338,7 +338,7 @@
 const SUBMIT_URL = "https://dharma-survey.antonshavkuta.workers.dev/submit";
 
 // Куда писать добровольцев для интервью (показывается на финальном экране)
-const CONTACT_TELEGRAM = "@dharma_toolkit"; // замените на реальный контакт
+const CONTACT_TELEGRAM = "@Shavkuta_Anton"; // замените на реальный контакт
 
 // ============ СОСТОЯНИЕ ============
 let answers = {};
@@ -519,6 +519,16 @@ const QUESTIONS = {
       { value: "Да, готов(а) поговорить" },
       { value: "Нет, спасибо" }
     ],
+    next: "q13"
+  },
+
+  q13: {
+    title: "Оставьте свободный комментарий",
+    hint: "Поделитесь своими мыслями: что нам как разработчикам важно было бы учесть.",
+    type: "textarea",
+    key: "comment",
+    placeholder: "Ваши пожелания, замечания, идеи…",
+    optional: true,
     next: "end"
   },
 
@@ -722,7 +732,7 @@ function buildResultText() {
     dates_source_other: "Источник дат (другое)", dates_checked: "Сверка дат",
     dates_conflict_details: "Расхождения дат", reading: "Чтение",
     apps_tried: "Приложения", interview: "Готовность к интервью",
-    interview_contact: "Контакт"
+    interview_contact: "Контакт", comment: "Комментарий"
   };
   let lines = [];
   for (const [k, v] of Object.entries(answers)) {
