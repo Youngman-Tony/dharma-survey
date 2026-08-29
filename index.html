@@ -308,6 +308,9 @@
     .btn { width: 100%; }
     .btn-row { flex-direction: column-reverse; }
     .btn-back { width: 100%; }
+    .header { margin-bottom: 22px; }
+    .header::after { font-size: 24px; bottom: -15px; padding: 0 12px; }
+    .reset-line { padding-top: 8px; }
   }
 </style>
 </head>
@@ -390,7 +393,8 @@ const QUESTIONS = {
 
   q2: {
     title: "К какой традиции/школе относите себя?",
-    type: "single",
+    hint: "Можно выбрать несколько, если практикуете в нескольких.",
+    type: "multi",
     key: "tradition",
     options: [
       { value: "Тхеравада", next: "q4" },
@@ -409,7 +413,7 @@ const QUESTIONS = {
     title: "Какая традиция или школа?",
     type: "text",
     key: "tradition_other",
-    placeholder: "Например: Джонанг, Амида, традиции моголов…",
+    placeholder: "Например: Джонанг, Риме…",
     next: "q4"
   },
 
@@ -640,6 +644,19 @@ function render(stepId) {
 function escHtml(s) { return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;"); }
 function escAttr(s) { return escHtml(s).replace(/"/g,"&quot;"); }
 
+// Маршрут продолжения для вопросов с множественным выбором
+const MULTI_ROUTES = {
+  count_method: (sel) => {
+    if (sel.indexOf("Приложение-счётчик") !== -1) return "q7";
+    if (sel.indexOf("Другое") !== -1) return "q6_other";
+    return "q8";
+  },
+  tradition: (sel) => {
+    if (sel.indexOf("Другое") !== -1) return "q2_other";
+    return "q4";
+  }
+};
+
 function bindEvents(q) {
   // Назад
   const backBtn = document.getElementById("backBtn");
@@ -711,14 +728,14 @@ function bindEvents(q) {
     nextBtn.onclick = () => {
       const sel = answers[q.key] || [];
       if (sel.length === 0) return;
-      let next;
-      if (sel.indexOf("Приложение-счётчик") !== -1) next = "q7";
-      else if (sel.indexOf("Другое") !== -1) next = "q6_other";
-      else next = "q8";
       answers[q.key] = sel.join("; ");
       saveState();
+      const route = MULTI_ROUTES[q.key] || ((list) => {
+        const first = q.options.find((o) => list.indexOf(o.value) !== -1);
+        return (first && first.next) ? first.next : "q4";
+      });
       history.push(currentStep);
-      render(next);
+      render(route(sel));
     };
   } else if (q.type === "contact") {
     const nextBtn = document.getElementById("nextBtn");
